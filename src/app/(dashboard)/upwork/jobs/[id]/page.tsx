@@ -626,7 +626,8 @@ export default function JobDetailPage() {
             )}
           </section>
 
-          {/* Payment Structure */}
+          {/* Payment Structure (fixed-price only) */}
+          {job.budgetType === "fixed" && (
           <section className="p-5 rounded-xl bg-surface border border-border">
             <h3 className="font-display text-sm font-semibold mb-3 flex items-center gap-1.5">
               <DollarSign size={13} className="text-accent" />
@@ -764,6 +765,7 @@ export default function JobDetailPage() {
               </div>
             )}
           </section>
+          )}
 
           {/* Description */}
           <section className="p-5 rounded-xl bg-surface border border-border">
