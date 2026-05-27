@@ -5,12 +5,16 @@ import {
   Check,
   Eye,
   EyeOff,
+  Hash,
   Loader2,
+  MessageSquare,
   RefreshCw,
   Save,
+  Send,
   Settings2,
   Wifi,
   WifiOff,
+  X,
 } from "lucide-react";
 import type { AvailableModel } from "@/lib/ai/providers";
 
@@ -19,6 +23,9 @@ type SettingsData = {
   ollamaUrl: string | null;
   modelAssignmentsJson: string | null;
   hasApiKeys: { openai: boolean };
+  hasSlack: { token: boolean; channel: boolean; enabled: boolean };
+  slackChannelId: string | null;
+  slackEnabled: number | null;
   updatedAt: string;
 };
 
@@ -47,6 +54,14 @@ export default function SettingsPage() {
   const [keyStatus, setKeyStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [assignments, setAssignments] = useState<ModelAssignments>({});
 
+  const [slackToken, setSlackToken] = useState("");
+  const [showSlackToken, setShowSlackToken] = useState(false);
+  const [slackTokenStatus, setSlackTokenStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [slackChannelId, setSlackChannelId] = useState("");
+  const [slackEnabled, setSlackEnabled] = useState(false);
+  const [slackTest, setSlackTest] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [slackTestError, setSlackTestError] = useState("");
+
   const fetchSettings = useCallback(async () => {
     const res = await fetch("/api/settings");
     if (res.ok) {
@@ -56,6 +71,8 @@ export default function SettingsPage() {
       if (data.modelAssignmentsJson) {
         setAssignments(JSON.parse(data.modelAssignmentsJson));
       }
+      setSlackChannelId(data.slackChannelId ?? "");
+      setSlackEnabled(!!data.slackEnabled);
     }
     setLoading(false);
   }, []);
@@ -135,6 +152,49 @@ export default function SettingsPage() {
     });
   }
 
+  async function saveSlackToken() {
+    setSlackTokenStatus("saving");
+    const res = await fetch("/api/slack/token", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: slackToken }),
+    });
+    if (res.ok) {
+      setSlackTokenStatus("saved");
+      setSlackToken("");
+      setShowSlackToken(false);
+      fetchSettings();
+      setTimeout(() => setSlackTokenStatus("idle"), 2000);
+    }
+  }
+
+  async function saveSlackSettings(channelId: string, enabled: boolean) {
+    await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slackChannelId: channelId || null,
+        slackEnabled: enabled ? 1 : 0,
+      }),
+    });
+    fetchSettings();
+  }
+
+  async function testSlack() {
+    setSlackTest("sending");
+    setSlackTestError("");
+    const res = await fetch("/api/slack/test", { method: "POST" });
+    if (res.ok) {
+      setSlackTest("success");
+      setTimeout(() => setSlackTest("idle"), 3000);
+    } else {
+      const data = await res.json();
+      setSlackTestError(data.error ?? "Test failed");
+      setSlackTest("error");
+      setTimeout(() => setSlackTest("idle"), 5000);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -146,6 +206,8 @@ export default function SettingsPage() {
   const ollamaConnected = models?.status.ollama.connected ?? false;
   const openAiConfigured = settings?.hasApiKeys.openai ?? false;
   const allModels = models?.models ?? [];
+  const slackTokenConfigured = settings?.hasSlack.token ?? false;
+  const slackChannelConfigured = settings?.hasSlack.channel ?? false;
 
   const currentAssignment = assignments.proposalDrafting;
   const currentValue = currentAssignment
@@ -277,6 +339,154 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Slack Notifications */}
+        <section className="p-5 rounded-xl bg-surface border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare size={16} className="text-accent" />
+            <h2 className="font-display text-sm font-semibold">
+              Slack Notifications
+            </h2>
+            <span className="ml-auto flex items-center gap-1.5 text-xs">
+              {slackTokenConfigured && slackChannelConfigured ? (
+                <>
+                  <Wifi size={12} className="text-accent" />
+                  <span className="text-accent">Configured</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff size={12} className="text-bone-dim/50" />
+                  <span className="text-bone-dim/50">Not configured</span>
+                </>
+              )}
+            </span>
+          </div>
+
+          {/* Bot Token */}
+          <div className="flex flex-col gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                  Bot User OAuth Token
+                </span>
+                {slackTokenConfigured && (
+                  <span className="flex items-center gap-1 text-[10px] text-accent">
+                    <Check size={10} /> Configured
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showSlackToken ? "text" : "password"}
+                    value={slackToken}
+                    onChange={(e) => setSlackToken(e.target.value)}
+                    placeholder={slackTokenConfigured ? "Enter new token to replace" : "xoxb-..."}
+                    className="w-full rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone placeholder:text-bone-dim/50 focus:border-accent focus:outline-none pr-9"
+                  />
+                  <button
+                    onClick={() => setShowSlackToken(!showSlackToken)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-bone-dim hover:text-bone transition-colors"
+                  >
+                    {showSlackToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <button
+                  onClick={saveSlackToken}
+                  disabled={!slackToken || slackTokenStatus === "saving"}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-ink-deep text-xs font-semibold hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {slackTokenStatus === "saving" ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : slackTokenStatus === "saved" ? (
+                    <Check size={12} />
+                  ) : (
+                    <Save size={12} />
+                  )}
+                  {slackTokenStatus === "saved" ? "Saved" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Channel ID */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                Channel ID
+              </span>
+              <Hash size={10} className="text-bone-dim/50" />
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={slackChannelId}
+                onChange={(e) => setSlackChannelId(e.target.value)}
+                placeholder="C0123456789"
+                className="flex-1 rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone placeholder:text-bone-dim/50 focus:border-accent focus:outline-none"
+              />
+              <button
+                onClick={() => saveSlackSettings(slackChannelId, slackEnabled)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-ink-deep text-xs font-semibold hover:brightness-110 transition-all"
+              >
+                <Save size={12} />
+                Save
+              </button>
+            </div>
+            <p className="text-[11px] text-bone-dim/50 mt-1.5">
+              Right-click a channel in Slack, select &quot;View channel details&quot;, then copy the Channel ID from the bottom.
+            </p>
+          </div>
+
+          {/* Enable toggle + Test */}
+          <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <button
+                role="switch"
+                aria-checked={slackEnabled}
+                onClick={() => {
+                  const next = !slackEnabled;
+                  setSlackEnabled(next);
+                  saveSlackSettings(slackChannelId, next);
+                }}
+                className={`relative w-9 h-5 rounded-full transition-colors ${slackEnabled ? "bg-accent" : "bg-border"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-bone transition-transform ${slackEnabled ? "translate-x-4" : ""}`}
+                />
+              </button>
+              <span className="text-xs text-bone-dim">
+                {slackEnabled ? "Notifications enabled" : "Notifications disabled"}
+              </span>
+            </label>
+
+            <button
+              onClick={testSlack}
+              disabled={!slackTokenConfigured || !slackChannelConfigured || slackTest === "sending"}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-bone-dim hover:text-bone hover:border-bone-dim/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {slackTest === "sending" ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : slackTest === "success" ? (
+                <Check size={12} className="text-accent" />
+              ) : slackTest === "error" ? (
+                <X size={12} className="text-red-400" />
+              ) : (
+                <Send size={12} />
+              )}
+              {slackTest === "sending"
+                ? "Sending..."
+                : slackTest === "success"
+                  ? "Sent"
+                  : slackTest === "error"
+                    ? "Failed"
+                    : "Send Test"}
+            </button>
+          </div>
+
+          {slackTestError && (
+            <p className="mt-2 text-xs text-red-400">{slackTestError}</p>
+          )}
         </section>
 
         {/* Model Assignments */}

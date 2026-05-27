@@ -16,25 +16,30 @@ function getOrCreateSettings() {
   return row;
 }
 
-function stripApiKeys(row: typeof settings.$inferSelect) {
+function stripSecrets(row: typeof settings.$inferSelect) {
   const keys = row.apiKeysJson ? JSON.parse(row.apiKeysJson) : {};
-  const { apiKeysJson: _, ...rest } = row;
+  const { apiKeysJson: _, slackBotToken: __, ...rest } = row;
   return {
     ...rest,
     hasApiKeys: {
       openai: !!keys.openai,
+    },
+    hasSlack: {
+      token: !!row.slackBotToken,
+      channel: !!row.slackChannelId,
+      enabled: !!row.slackEnabled,
     },
   };
 }
 
 export async function GET() {
   const row = getOrCreateSettings();
-  return NextResponse.json(stripApiKeys(row));
+  return NextResponse.json(stripSecrets(row));
 }
 
 export async function PUT(req: Request) {
   const body = await req.json();
-  const { id: _, apiKeysJson: __, ...updates } = body;
+  const { id: _, apiKeysJson: __, slackBotToken: ___, ...updates } = body;
   updates.updatedAt = new Date().toISOString();
 
   for (const field of JSON_FIELDS) {
@@ -45,5 +50,5 @@ export async function PUT(req: Request) {
 
   db.update(settings).set(updates).where(eq(settings.id, 1)).run();
   const updated = getOrCreateSettings();
-  return NextResponse.json(stripApiKeys(updated));
+  return NextResponse.json(stripSecrets(updated));
 }

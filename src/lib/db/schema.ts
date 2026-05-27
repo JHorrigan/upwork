@@ -55,6 +55,9 @@ export const settings = sqliteTable("settings", {
   ollamaUrl: text("ollama_url").default("http://localhost:11434"),
   modelAssignmentsJson: text("model_assignments_json"),
   apiKeysJson: text("api_keys_json"),
+  slackBotToken: text("slack_bot_token"),
+  slackChannelId: text("slack_channel_id"),
+  slackEnabled: integer("slack_enabled").default(0),
   updatedAt: text("updated_at").notNull(),
 });
 
