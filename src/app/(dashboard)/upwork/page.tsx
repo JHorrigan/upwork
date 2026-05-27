@@ -1,29 +1,47 @@
-import { FileText, FolderOpen, TrendingUp, Zap } from "lucide-react";
+import { Bell, FileText, FolderOpen, Mail, TrendingUp, User, Zap } from "lucide-react";
 
 const sections = [
   {
+    title: "Profile",
+    description: "Your skills, experience, and positioning. Feeds into proposal drafting.",
+    icon: User,
+    status: "v0.1",
+  },
+  {
+    title: "Job Feed",
+    description: "Jobs from Upwork email alerts, parsed and surfaced newest first.",
+    icon: Mail,
+    status: "v0.1",
+  },
+  {
+    title: "Telegram Alerts",
+    description: "Push notifications for new matching jobs, straight to your phone.",
+    icon: Bell,
+    status: "v0.1",
+  },
+  {
     title: "Proposals",
-    description: "Draft, track, and manage your job proposals.",
+    description: "AI-drafted proposals using your profile. Track through the pipeline.",
     icon: FileText,
-    status: "Coming soon",
+    status: "v0.1",
   },
   {
     title: "Project Catalog",
     description: "Create and manage pre-defined service listings.",
     icon: FolderOpen,
-    status: "Coming soon",
+    status: "v0.2",
   },
   {
     title: "Strategy",
     description: "Win-rate tracking, connect budgets, and weekly goals.",
     icon: TrendingUp,
-    status: "Coming soon",
+    status: "v0.3",
   },
   {
-    title: "Job Discovery",
-    description: "Find and score matching jobs via RSS feeds.",
+    title: "Job Discovery+",
+    description: "AI scoring, quick-apply workflow, and feed analytics.",
     icon: Zap,
-    status: "Coming soon",
+    status: "v0.4",
   },
 ];
 
