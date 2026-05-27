@@ -12,6 +12,7 @@ const STATUSES = [
   "viewed",
   "interview",
   "won",
+  "completed",
   "lost",
 ] as const;
 
@@ -21,6 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
   viewed: "bg-purple-500/15 text-purple-400",
   interview: "bg-amber-500/15 text-amber-400",
   won: "bg-accent/15 text-accent",
+  completed: "bg-emerald-500/15 text-emerald-400",
   lost: "bg-red-500/15 text-red-400",
 };
 

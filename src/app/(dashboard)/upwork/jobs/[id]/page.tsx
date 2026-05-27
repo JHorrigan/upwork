@@ -7,16 +7,34 @@ import {
   ArrowLeft,
   Check,
   ClipboardCopy,
+  DollarSign,
   ExternalLink,
   Loader2,
   Pencil,
   RefreshCw,
   Save,
+  TrendingUp,
   Trash2,
   X,
   Zap,
 } from "lucide-react";
 import type { Job, ProposalTemplate } from "@/lib/db/schema";
+
+type RateGuidance = {
+  suggestedRate: number;
+  rateRange: { low: number; high: number };
+  currency: string;
+  upworkFee: number;
+  youReceive: number;
+  justification: string;
+  rateIncrease: {
+    recommended: boolean;
+    frequency: string;
+    percent: number | null;
+    reasoning: string;
+  };
+  strategyPhase: string;
+};
 
 const STATUSES = [
   "draft",
@@ -24,6 +42,7 @@ const STATUSES = [
   "viewed",
   "interview",
   "won",
+  "completed",
   "lost",
 ] as const;
 
@@ -33,6 +52,7 @@ const STATUS_COLORS: Record<string, string> = {
   viewed: "bg-purple-500/15 text-purple-400",
   interview: "bg-amber-500/15 text-amber-400",
   won: "bg-accent/15 text-accent",
+  completed: "bg-emerald-500/15 text-emerald-400",
   lost: "bg-red-500/15 text-red-400",
 };
 
@@ -57,11 +77,19 @@ export default function JobDetailPage() {
   const [templates, setTemplates] = useState<ProposalTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
+  const [rateGuidance, setRateGuidance] = useState<RateGuidance | null>(null);
+  const [rateLoading, setRateLoading] = useState(false);
+  const [rateError, setRateError] = useState("");
+  const [bidRateInput, setBidRateInput] = useState("");
+  const [bidRateSaving, setBidRateSaving] = useState(false);
+  const [bidRateSaved, setBidRateSaved] = useState(false);
+
   const fetchJob = useCallback(async () => {
     const res = await fetch(`/api/jobs/${id}`);
     if (res.ok) {
       const data = await res.json();
       setJob(data);
+      if (data.bidRate != null) setBidRateInput(String(data.bidRate));
     }
     setLoading(false);
   }, [id]);
@@ -160,6 +188,40 @@ export default function JobDetailPage() {
     await navigator.clipboard.writeText(job.proposalText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function fetchRateGuidance() {
+    setRateLoading(true);
+    setRateError("");
+    const res = await fetch("/api/rate-guidance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobId: Number(id) }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setRateGuidance(data.guidance);
+    } else {
+      const err = await res.json();
+      setRateError(err.error ?? "Failed to get rate guidance");
+    }
+    setRateLoading(false);
+  }
+
+  async function saveBidRate() {
+    if (!bidRateInput) return;
+    setBidRateSaving(true);
+    const res = await fetch(`/api/jobs/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bidRate: Number(bidRateInput) }),
+    });
+    if (res.ok) {
+      setJob(await res.json());
+      setBidRateSaved(true);
+      setTimeout(() => setBidRateSaved(false), 2000);
+    }
+    setBidRateSaving(false);
   }
 
   if (loading) {
@@ -411,8 +473,176 @@ export default function JobDetailPage() {
           )}
         </div>
 
-        {/* Proposal Section */}
+        {/* Right Column: Rate Guidance + Proposal */}
         <div className="flex flex-col gap-4">
+          {/* Rate Guidance */}
+          <section className="p-5 rounded-xl bg-surface border border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-sm font-semibold flex items-center gap-1.5">
+                <DollarSign size={14} className="text-accent" />
+                Rate Guidance
+              </h3>
+              {rateGuidance && (
+                <button
+                  onClick={fetchRateGuidance}
+                  disabled={rateLoading}
+                  className="flex items-center gap-1 text-xs text-bone-dim hover:text-bone transition-colors"
+                >
+                  {rateLoading ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={12} />
+                  )}
+                  Refresh
+                </button>
+              )}
+            </div>
+
+            {rateError && (
+              <p className="text-xs text-red-400 mb-3">{rateError}</p>
+            )}
+
+            {rateGuidance ? (
+              <div className="flex flex-col gap-4">
+                {/* Rate recommendation */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold tracking-tight text-bone">
+                        {rateGuidance.currency === "GBP" ? "£" : "$"}
+                        {rateGuidance.suggestedRate}
+                        <span className="text-sm font-normal text-bone-dim">/hr</span>
+                      </span>
+                      <span className="text-[10px] font-mono tracking-wider uppercase text-bone-dim/50">
+                        recommended
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-bone-dim">
+                      <span>
+                        Range: {rateGuidance.currency === "GBP" ? "£" : "$"}
+                        {rateGuidance.rateRange.low}--{rateGuidance.currency === "GBP" ? "£" : "$"}
+                        {rateGuidance.rateRange.high}
+                      </span>
+                      <span className="text-bone-dim/30">|</span>
+                      <span>
+                        Fee: -{rateGuidance.currency === "GBP" ? "£" : "$"}
+                        {rateGuidance.upworkFee.toFixed(2)}
+                      </span>
+                      <span className="text-bone-dim/30">|</span>
+                      <span className="text-accent font-medium">
+                        You receive: {rateGuidance.currency === "GBP" ? "£" : "$"}
+                        {rateGuidance.youReceive.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Strategy phase badge */}
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/10 text-accent">
+                    <TrendingUp size={10} />
+                    {rateGuidance.strategyPhase}
+                  </span>
+                </div>
+
+                {/* Justification */}
+                <p className="text-xs text-bone-dim leading-relaxed">
+                  {rateGuidance.justification}
+                </p>
+
+                {/* Rate increase recommendation */}
+                {rateGuidance.rateIncrease.recommended && (
+                  <div className="rounded-lg bg-ink p-3 border border-border-subtle">
+                    <p className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50 mb-1">
+                      Rate Increase Schedule
+                    </p>
+                    <p className="text-xs text-bone">
+                      {rateGuidance.rateIncrease.percent}% every{" "}
+                      {rateGuidance.rateIncrease.frequency}
+                    </p>
+                    <p className="text-xs text-bone-dim mt-1">
+                      {rateGuidance.rateIncrease.reasoning}
+                    </p>
+                  </div>
+                )}
+                {rateGuidance.rateIncrease && !rateGuidance.rateIncrease.recommended && (
+                  <div className="rounded-lg bg-ink p-3 border border-border-subtle">
+                    <p className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50 mb-1">
+                      Rate Increase Schedule
+                    </p>
+                    <p className="text-xs text-bone-dim">
+                      {rateGuidance.rateIncrease.reasoning}
+                    </p>
+                  </div>
+                )}
+
+                {/* Bid rate input */}
+                <div className="border-t border-border-subtle pt-3">
+                  <p className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50 mb-2">
+                    Your Bid Rate
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 max-w-[140px]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-bone-dim/50">
+                        {job.bidRateCurrency === "GBP" || (!job.bidRateCurrency && rateGuidance.currency === "GBP") ? "£" : "$"}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={bidRateInput}
+                        onChange={(e) => setBidRateInput(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full rounded-lg border border-border bg-ink pl-7 pr-10 py-1.5 text-sm text-bone placeholder:text-bone-dim/30 focus:border-accent focus:outline-none"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-bone-dim/50">
+                        /hr
+                      </span>
+                    </div>
+                    <button
+                      onClick={saveBidRate}
+                      disabled={bidRateSaving || !bidRateInput}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-ink-deep text-xs font-semibold hover:brightness-110 transition-all disabled:opacity-50"
+                    >
+                      {bidRateSaving ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : bidRateSaved ? (
+                        <Check size={12} />
+                      ) : (
+                        <Save size={12} />
+                      )}
+                      {bidRateSaved ? "Saved" : "Save"}
+                    </button>
+                  </div>
+                  {job.bidRate != null && (
+                    <p className="text-xs text-bone-dim/50 mt-1.5">
+                      After 10% fee: {job.bidRateCurrency === "GBP" ? "£" : "$"}
+                      {(job.bidRate * 0.9).toFixed(2)}/hr
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-xs text-bone-dim/50 mb-4">
+                  Get AI-powered rate advice based on the client&apos;s budget, your experience level, and Upwork fees.
+                </p>
+                <button
+                  onClick={fetchRateGuidance}
+                  disabled={rateLoading}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-ink-deep text-xs font-semibold hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {rateLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Zap size={14} />
+                  )}
+                  Get Rate Guidance
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* Proposal */}
           <section className="p-5 rounded-xl bg-surface border border-border">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display text-sm font-semibold">Proposal</h3>

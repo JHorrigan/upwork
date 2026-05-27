@@ -5,3 +5,5 @@
 - [03-slack-integration.md](03-slack-integration.md) -- Slack Bot config in Settings + test notification endpoint
 - [04-proposal-templates.md](04-proposal-templates.md) -- Reusable proposal templates for AI drafter
 - [05-job-feed-webhook.md](05-job-feed-webhook.md) -- Job feed via Upwork Job Scraper browser extension webhook
+- [06-proposal-workshop.md](06-proposal-workshop.md) -- Interactive proposal workshop with assessment, scoring, approach gen, and iterative refinement
+- [07-rate-guidance.md](07-rate-guidance.md) -- AI rate guidance, completed project tracking, Upwork fee breakdown, rate increase scheduling

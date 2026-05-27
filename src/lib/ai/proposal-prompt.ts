@@ -5,6 +5,7 @@ export function buildProposalPrompts(
   jobDescription: string,
   jobTitle?: string,
   templateContent?: string,
+  bidRate?: number | null,
 ): { systemPrompt: string; userPrompt: string } {
   const skills: string[] = profile.skillsJson
     ? JSON.parse(profile.skillsJson)
@@ -44,6 +45,11 @@ RULES:
 - Never list every technology you know -- only mention what's relevant to this job.
 - Do not use emojis.
 - Write the proposal text only -- no headers, no labels, no section markers.${
+    bidRate
+      ? `
+- The freelancer is bidding at ${profile.rateCurrency === "GBP" ? "£" : "$"}${bidRate}/hr for this job. You may reference this rate naturally if it helps the proposal (e.g. "at my rate of..."), but do not force it in.`
+      : ""
+  }${
     templateContent
       ? `
 

@@ -12,6 +12,7 @@ export async function POST(req: Request) {
 
   let description = jobDescription;
   let title = jobTitle;
+  let bidRate: number | null = null;
 
   if (jobId) {
     const job = db
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
     }
     description = job.description;
     title = title ?? job.title;
+    bidRate = job.bidRate;
   }
 
   if (!description) {
@@ -72,6 +74,7 @@ export async function POST(req: Request) {
     description,
     title,
     templateContent,
+    bidRate,
   );
 
   const proposal = await generate(

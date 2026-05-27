@@ -92,6 +92,8 @@ export const jobs = sqliteTable("jobs", {
   notes: text("notes"),
   status: text("status").default("draft").notNull(),
   proposalText: text("proposal_text"),
+  bidRate: real("bid_rate"),
+  bidRateCurrency: text("bid_rate_currency"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
