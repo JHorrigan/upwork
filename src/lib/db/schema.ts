@@ -97,3 +97,15 @@ export const jobs = sqliteTable("jobs", {
 });
 
 export type Job = typeof jobs.$inferSelect;
+
+// --- Proposal Templates ---
+
+export const proposalTemplates = sqliteTable("proposal_templates", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  content: text("content").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export type ProposalTemplate = typeof proposalTemplates.$inferSelect;

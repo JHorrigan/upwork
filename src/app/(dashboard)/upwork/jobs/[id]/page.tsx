@@ -16,7 +16,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import type { Job } from "@/lib/db/schema";
+import type { Job, ProposalTemplate } from "@/lib/db/schema";
 
 const STATUSES = [
   "draft",
@@ -54,6 +54,9 @@ export default function JobDetailPage() {
   const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState("");
 
+  const [templates, setTemplates] = useState<ProposalTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+
   const fetchJob = useCallback(async () => {
     const res = await fetch(`/api/jobs/${id}`);
     if (res.ok) {
@@ -65,6 +68,9 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     fetchJob();
+    fetch("/api/proposal-templates")
+      .then((r) => r.json())
+      .then((d) => setTemplates(d.templates ?? []));
   }, [fetchJob]);
 
   async function updateStatus(status: string) {
@@ -108,10 +114,12 @@ export default function JobDetailPage() {
   async function generateProposal() {
     setGenerating(true);
     setGenError("");
+    const payload: Record<string, unknown> = { jobId: Number(id) };
+    if (selectedTemplateId) payload.templateId = Number(selectedTemplateId);
     const res = await fetch("/api/proposals/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId: Number(id) }),
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       const data = await res.json();
@@ -428,6 +436,20 @@ export default function JobDetailPage() {
                     <Pencil size={12} />
                     Edit
                   </button>
+                  {templates.length > 0 && (
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="rounded border border-border bg-ink px-2 py-0.5 text-[11px] text-bone-dim focus:border-accent focus:outline-none"
+                    >
+                      <option value="">No template</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     onClick={generateProposal}
                     disabled={generating}
@@ -483,6 +505,22 @@ export default function JobDetailPage() {
                 <p className="text-xs text-bone-dim/50 mb-4">
                   No proposal yet. Generate one using AI or write your own.
                 </p>
+                {templates.length > 0 && (
+                  <div className="mb-4">
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="rounded-lg border border-border bg-ink px-3 py-1.5 text-xs text-bone focus:border-accent focus:outline-none"
+                    >
+                      <option value="">No template (freeform)</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {genError && (
                   <p className="text-xs text-red-400 mb-3">{genError}</p>
                 )}

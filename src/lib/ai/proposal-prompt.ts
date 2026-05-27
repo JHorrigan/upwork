@@ -4,6 +4,7 @@ export function buildProposalPrompts(
   profile: Profile,
   jobDescription: string,
   jobTitle?: string,
+  templateContent?: string,
 ): { systemPrompt: string; userPrompt: string } {
   const skills: string[] = profile.skillsJson
     ? JSON.parse(profile.skillsJson)
@@ -42,7 +43,16 @@ RULES:
 - Never start with "Dear Sir/Madam" or "I am a highly skilled professional."
 - Never list every technology you know -- only mention what's relevant to this job.
 - Do not use emojis.
-- Write the proposal text only -- no headers, no labels, no section markers.`;
+- Write the proposal text only -- no headers, no labels, no section markers.${
+    templateContent
+      ? `
+
+REFERENCE TEMPLATE:
+The freelancer has provided a template below as a starting point. Use its tone, structure, and style as a guide, but customize fully for this specific job. Do not copy it verbatim.
+
+${templateContent}`
+      : ""
+  }`;
 
   const titleLine = jobTitle ? `Job Title: ${jobTitle}\n` : "";
   const userPrompt = `${titleLine}Job Description:\n${jobDescription}`;

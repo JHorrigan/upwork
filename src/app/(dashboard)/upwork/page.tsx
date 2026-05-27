@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, FileText, FolderOpen, Mail, TrendingUp, User, Zap } from "lucide-react";
+import { Bell, BookTemplate, FileText, FolderOpen, Mail, TrendingUp, User, Zap } from "lucide-react";
 
 const sections = [
   {
@@ -29,6 +29,13 @@ const sections = [
     icon: FileText,
     status: "v0.1",
     href: "/upwork/jobs",
+  },
+  {
+    title: "Proposal Templates",
+    description: "Reusable starting points the AI drafter builds from. Set the tone and structure.",
+    icon: BookTemplate,
+    status: "v0.1",
+    href: "/upwork/templates",
   },
   {
     title: "Project Catalog",

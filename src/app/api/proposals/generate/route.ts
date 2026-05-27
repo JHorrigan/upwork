@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { profile, settings, jobs } from "@/lib/db/schema";
+import { profile, settings, jobs, proposalTemplates } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generate } from "@/lib/ai/providers";
 import { buildProposalPrompts } from "@/lib/ai/proposal-prompt";
@@ -8,7 +8,7 @@ import type { ModelAssignments, ApiKeys } from "@/lib/db/schema";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { jobId, jobDescription, jobTitle } = body;
+  const { jobId, jobDescription, jobTitle, templateId } = body;
 
   let description = jobDescription;
   let title = jobTitle;
@@ -57,10 +57,21 @@ export async function POST(req: Request) {
     );
   }
 
+  let templateContent: string | undefined;
+  if (templateId) {
+    const tmpl = db
+      .select()
+      .from(proposalTemplates)
+      .where(eq(proposalTemplates.id, Number(templateId)))
+      .get();
+    templateContent = tmpl?.content;
+  }
+
   const { systemPrompt, userPrompt } = buildProposalPrompts(
     prof,
     description,
     title,
+    templateContent,
   );
 
   const proposal = await generate(
