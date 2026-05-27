@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { jobs } from "@/lib/db/schema";
+import { feedJobs, jobs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendSlackNotification } from "@/lib/slack";
 
@@ -52,8 +52,13 @@ export async function PUT(req: Request, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id } = await params;
+  const jobId = Number(id);
+  db.update(feedJobs)
+    .set({ promotedJobId: null })
+    .where(eq(feedJobs.promotedJobId, jobId))
+    .run();
   db.delete(jobs)
-    .where(eq(jobs.id, Number(id)))
+    .where(eq(jobs.id, jobId))
     .run();
   return NextResponse.json({ ok: true });
 }
