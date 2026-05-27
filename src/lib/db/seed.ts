@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { profile } from "./schema";
+import { profile, settings } from "./schema";
 import path from "path";
 import fs from "fs";
 
@@ -14,12 +14,10 @@ sqlite.pragma("foreign_keys = ON");
 
 const db = drizzle(sqlite);
 
-const existing = db.select().from(profile).get();
-if (existing) {
-  console.log("Profile already exists, skipping seed.");
-  sqlite.close();
-  process.exit(0);
-}
+const existingProfile = db.select().from(profile).get();
+if (existingProfile) {
+  console.log("Profile already exists, skipping.");
+} else {
 
 db.insert(profile)
   .values({
@@ -169,4 +167,19 @@ If you have a project in mind, please drop me a message. Let's build something g
   .run();
 
 console.log("Profile seeded successfully.");
+}
+
+const existingSettings = db.select().from(settings).get();
+if (!existingSettings) {
+  db.insert(settings)
+    .values({
+      ollamaUrl: "http://localhost:11434",
+      updatedAt: new Date().toISOString(),
+    })
+    .run();
+  console.log("Settings seeded successfully.");
+} else {
+  console.log("Settings already exist, skipping seed.");
+}
+
 sqlite.close();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, LayoutDashboard } from "lucide-react";
+import { Briefcase, LayoutDashboard, Settings } from "lucide-react";
 
 const platforms = [
   {
@@ -68,10 +68,21 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="mt-auto px-4 py-4 border-t border-border-subtle">
-        <p className="text-[10px] font-mono text-bone-dim/40 tracking-wide">
-          v0.1 -- Proposal Assistant
-        </p>
+      <div className="mt-auto border-t border-border-subtle">
+        <div className="px-3 py-3">
+          <Link
+            href="/settings"
+            className={`nav-item ${pathname.startsWith("/settings") ? "nav-item-active" : ""}`}
+          >
+            <Settings size={14} />
+            <span>Settings</span>
+          </Link>
+        </div>
+        <div className="px-4 pb-4">
+          <p className="text-[10px] font-mono text-bone-dim/40 tracking-wide">
+            v0.1 -- Proposal Assistant
+          </p>
+        </div>
       </div>
     </aside>
   );

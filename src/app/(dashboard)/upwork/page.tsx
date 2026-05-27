@@ -17,18 +17,18 @@ const sections = [
     href: null,
   },
   {
-    title: "Telegram Alerts",
-    description: "Push notifications for new matching jobs, straight to your phone.",
+    title: "Slack Alerts",
+    description: "Push notifications for new matching jobs, straight to Slack.",
     icon: Bell,
     status: "v0.1",
     href: null,
   },
   {
-    title: "Proposals",
-    description: "AI-drafted proposals using your profile. Track through the pipeline.",
+    title: "Jobs & Proposals",
+    description: "Track jobs through the pipeline. AI-draft proposals using your profile.",
     icon: FileText,
     status: "v0.1",
-    href: null,
+    href: "/upwork/jobs",
   },
   {
     title: "Project Catalog",

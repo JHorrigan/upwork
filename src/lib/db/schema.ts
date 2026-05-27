@@ -47,3 +47,50 @@ export type Language = {
   language: string;
   proficiency: string;
 };
+
+// --- Settings ---
+
+export const settings = sqliteTable("settings", {
+  id: integer("id").primaryKey().default(1),
+  ollamaUrl: text("ollama_url").default("http://localhost:11434"),
+  modelAssignmentsJson: text("model_assignments_json"),
+  apiKeysJson: text("api_keys_json"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export type Settings = typeof settings.$inferSelect;
+
+export type ModelAssignment = {
+  provider: "ollama" | "openai";
+  model: string;
+};
+
+export type ModelAssignments = {
+  proposalDrafting?: ModelAssignment;
+};
+
+export type ApiKeys = {
+  openai?: string;
+};
+
+// --- Jobs ---
+
+export const jobs = sqliteTable("jobs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  upworkUrl: text("upwork_url"),
+  budget: text("budget"),
+  budgetType: text("budget_type").default("fixed"),
+  description: text("description"),
+  clientInfo: text("client_info"),
+  proposalCount: integer("proposal_count"),
+  connectsCost: integer("connects_cost"),
+  deadline: text("deadline"),
+  notes: text("notes"),
+  status: text("status").default("draft").notNull(),
+  proposalText: text("proposal_text"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export type Job = typeof jobs.$inferSelect;

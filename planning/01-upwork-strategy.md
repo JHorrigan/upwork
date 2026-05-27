@@ -102,8 +102,8 @@ The cold-start problem is the hardest part. Every decision should optimize for g
 
 ### v0.1 -- Proposal Assistant (Build First)
 - **Profile**: Enter skills, experience summary, portfolio highlights, Upwork profile URL, positioning statement. Feeds into the proposal drafter so every proposal is personalized. Reusable across platforms later.
-- **Job feed (email parsing)**: Set up Upwork saved searches with email notifications pointed at a dedicated inbox. App parses incoming emails to extract job details, surfaces new jobs newest-first, and pushes Telegram alerts. Zero TOS risk -- uses Upwork's own notification system. Latency is 5-15 min (acceptable for v0.1; if too slow, fall back to a $10/mo third-party alert tool like OutBid or Pitch Pilot as a stopgap).
-- **Telegram notifications**: Bot sends alerts for new matching jobs. Telegram Bot API is free. Enables fast response even when not in the app.
+- **Job feed (email parsing)**: Set up Upwork saved searches with email notifications pointed at a dedicated inbox. App parses incoming emails to extract job details, surfaces new jobs newest-first, and pushes Slack alerts. Zero TOS risk -- uses Upwork's own notification system. Latency is 5-15 min (acceptable for v0.1; if too slow, fall back to a $10/mo third-party alert tool like OutBid or Pitch Pilot as a stopgap).
+- **Slack notifications**: Bot sends alerts for new matching jobs. Slack Bot API is free. Enables fast response even when not in the app.
 - **Job tracker**: Jobs you're interested in go into a pipeline (Draft / Submitted / Viewed / Interview / Won / Lost).
 - **Proposal drafter**: AI-assisted (Anthropic or OpenAI API), uses your profile + job description to generate tailored proposals following the winning structure (hook, relevance, approach, differentiator, CTA). Build ourselves -- better than paying $8-30/mo for generic third-party tools.
 - **Proposal templates**: Save and reuse base templates that the drafter can build from.
@@ -137,7 +137,7 @@ The cold-start problem is the hardest part. Every decision should optimize for g
 - Upwork killed RSS feeds in 2024. Email notification parsing is the safest automated discovery method.
 - Scraping Upwork is too risky for a new account (bans increased 23% in 2025). Do not scrape.
 - All AI-assisted features (proposal drafting) will use Anthropic or OpenAI APIs. Build ourselves -- the third-party proposal tools are just LLM wrappers with less customization.
-- Telegram Bot API for push notifications. Free, trivial to implement.
+- Slack Bot API for push notifications. Free, trivial to implement.
 - Data storage: start with local SQLite (same pattern as job-board project), migrate to hosted DB later if needed.
 - Profile optimization: use free tools (UpHunt analyzer, Vollna review) directly. No need to rebuild.
 - If email parsing latency is unacceptable, consider OutBid ($10/mo) or Pitch Pilot ($10/mo) as a paid stopgap until API access is unlocked.
@@ -147,7 +147,7 @@ The cold-start problem is the hardest part. Every decision should optimize for g
 | Capability | Decision | Reason |
 |---|---|---|
 | AI proposal drafting | Build | Easy, better control, saves $8-30/mo |
-| Telegram notifications | Build | Trivial, free API, 20 lines of code |
+| Slack notifications | Build | Trivial, free API, 20 lines of code |
 | Job monitoring | Build (email parsing) | Safe, free, acceptable latency. Fall back to paid tool if too slow. |
 | Profile optimization | Use free tools | UpHunt analyzer & Vollna reviews are free and good enough |
 | Browser extension | Defer | Different tech stack, scope increase. Consider for v0.4+ |
