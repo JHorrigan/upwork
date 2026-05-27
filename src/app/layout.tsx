@@ -23,8 +23,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Upwork Freelance Manager",
-  description: "Tools and guidance for winning freelance work on Upwork.",
+  title: "Freelance Manager",
+  description: "Tools and guidance for winning freelance work.",
 };
 
 export default function RootLayout({
@@ -37,7 +37,7 @@ export default function RootLayout({
       lang="en"
       className={`${jakarta.variable} ${inter.variable} ${mono.variable}`}
     >
-      <body className="bg-ink font-sans text-bone antialiased min-h-screen flex flex-col">
+      <body className="bg-ink font-sans text-bone antialiased h-screen overflow-hidden">
         {children}
       </body>
     </html>
