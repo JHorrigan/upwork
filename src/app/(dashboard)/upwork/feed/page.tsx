@@ -14,6 +14,7 @@ import {
   EyeOff,
   FileText,
   Loader2,
+  RotateCcw,
   Rss,
   Search,
   SlidersHorizontal,
@@ -257,6 +258,17 @@ export default function FeedPage() {
       body: JSON.stringify({ dismissed: 1 }),
     });
     setJobs((prev) => prev.filter((j) => j.id !== id));
+  }
+
+  async function restore(id: number) {
+    await fetch(`/api/feed-jobs/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dismissed: 0 }),
+    });
+    setJobs((prev) =>
+      prev.map((j) => (j.id === id ? { ...j, dismissed: 0 } : j)),
+    );
   }
 
   if (loading) {
@@ -581,6 +593,16 @@ export default function FeedPage() {
                           title="Dismiss"
                         >
                           <X size={14} />
+                        </button>
+                      )}
+                      {!isPromoted && !!job.dismissed && (
+                        <button
+                          onClick={() => restore(job.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-bone-dim/50 hover:text-accent hover:bg-surface-raised transition-colors"
+                          title="Restore to feed"
+                        >
+                          <RotateCcw size={12} />
+                          Restore
                         </button>
                       )}
                     </div>

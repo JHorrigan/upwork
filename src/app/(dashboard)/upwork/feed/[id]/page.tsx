@@ -9,6 +9,7 @@ import {
   Clock,
   ExternalLink,
   Loader2,
+  RotateCcw,
   Star,
   X,
 } from "lucide-react";
@@ -66,6 +67,15 @@ export default function FeedJobDetailPage() {
       body: JSON.stringify({ dismissed: 1 }),
     });
     router.push("/upwork/feed");
+  }
+
+  async function restore() {
+    await fetch(`/api/feed-jobs/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dismissed: 0 }),
+    });
+    setJob((prev) => (prev ? { ...prev, dismissed: 0 } : prev));
   }
 
   if (loading) {
@@ -136,6 +146,15 @@ export default function FeedJobDetailPage() {
                 Track This Job
               </button>
             </>
+          )}
+          {!isPromoted && !!job.dismissed && (
+            <button
+              onClick={restore}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/30 text-xs font-medium text-accent hover:bg-accent/10 transition-colors"
+            >
+              <RotateCcw size={12} />
+              Restore to Feed
+            </button>
           )}
           {isPromoted && (
             <Link
