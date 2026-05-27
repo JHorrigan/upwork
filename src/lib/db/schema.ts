@@ -106,6 +106,9 @@ export const jobs = sqliteTable("jobs", {
   paymentType: text("payment_type"),
   milestonesJson: text("milestones_json"),
   highlightedProjectIndex: integer("highlighted_project_index"),
+  submittedAt: text("submitted_at"),
+  wonAt: text("won_at"),
+  completedAt: text("completed_at"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

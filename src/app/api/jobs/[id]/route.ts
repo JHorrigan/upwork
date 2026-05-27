@@ -23,13 +23,26 @@ export async function PUT(req: Request, { params }: Params) {
   const { id } = await params;
   const body = await req.json();
   const { id: _, createdAt: __, ...updates } = body;
-  updates.updatedAt = new Date().toISOString();
+  const now = new Date().toISOString();
+  updates.updatedAt = now;
 
   const before = db
     .select()
     .from(jobs)
     .where(eq(jobs.id, Number(id)))
     .get();
+
+  if (updates.status && before) {
+    if (updates.status === "submitted" && before.status !== "submitted") {
+      updates.submittedAt = now;
+    }
+    if (updates.status === "won" && before.status !== "won") {
+      updates.wonAt = now;
+    }
+    if (updates.status === "completed" && before.status !== "completed") {
+      updates.completedAt = now;
+    }
+  }
 
   db.update(jobs)
     .set(updates)
