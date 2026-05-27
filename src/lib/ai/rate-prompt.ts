@@ -8,8 +8,18 @@ type RateContext = {
   jobDescription: string;
   budget: string | null;
   budgetType: string | null;
+  budgetMin: number | null;
+  budgetMax: number | null;
   clientInfo: string | null;
   proposalCount: number | null;
+  experienceLevel: string | null;
+  weeklyHours: string | null;
+  projectLength: string | null;
+  jobSkills: string[];
+  profileSkillOverlap: string[];
+  paymentType: string | null;
+  milestoneCount: number;
+  milestoneTotal: number | null;
 };
 
 export function buildRatePrompts(ctx: RateContext): {
@@ -73,9 +83,29 @@ Return ONLY valid JSON. No markdown, no code fences, no extra text.`;
 
   const parts: string[] = [];
   parts.push(`Job Title: ${ctx.jobTitle}`);
-  if (ctx.budget) parts.push(`Client Budget: ${ctx.budget} (${ctx.budgetType ?? "unknown type"})`);
+  if (ctx.budgetMin != null && ctx.budgetMax != null) {
+    if (ctx.budgetMin === ctx.budgetMax) {
+      parts.push(`Client Budget: ${symbol}${ctx.budgetMin} (${ctx.budgetType ?? "fixed"})`);
+    } else {
+      parts.push(`Client Budget: ${symbol}${ctx.budgetMin} - ${symbol}${ctx.budgetMax}/hr (${ctx.budgetType ?? "hourly"})`);
+    }
+  } else if (ctx.budget) {
+    parts.push(`Client Budget: ${ctx.budget} (${ctx.budgetType ?? "unknown type"})`);
+  }
+  if (ctx.experienceLevel) parts.push(`Experience Level: ${ctx.experienceLevel}`);
+  if (ctx.weeklyHours) parts.push(`Weekly Hours: ${ctx.weeklyHours}`);
+  if (ctx.projectLength) parts.push(`Project Length: ${ctx.projectLength}`);
   if (ctx.clientInfo) parts.push(`Client Info: ${ctx.clientInfo}`);
-  if (ctx.proposalCount != null) parts.push(`Existing Proposals: ${ctx.proposalCount}`);
+  if (ctx.proposalCount != null) parts.push(`Existing Proposals: ~${ctx.proposalCount}`);
+  if (ctx.paymentType === "milestones") {
+    parts.push(`Payment: By milestones (${ctx.milestoneCount} milestones${ctx.milestoneTotal != null ? `, total ${symbol}${ctx.milestoneTotal.toFixed(2)}` : ""})`);
+  } else if (ctx.paymentType === "project") {
+    parts.push(`Payment: By project (single payment on completion)`);
+  }
+  if (ctx.jobSkills.length > 0) parts.push(`Required Skills: ${ctx.jobSkills.join(", ")}`);
+  if (ctx.profileSkillOverlap.length > 0) {
+    parts.push(`Freelancer Matching Skills: ${ctx.profileSkillOverlap.join(", ")} (${ctx.profileSkillOverlap.length}/${ctx.jobSkills.length} match)`);
+  }
   parts.push(`\nJob Description:\n${ctx.jobDescription}`);
 
   const userPrompt = parts.join("\n");

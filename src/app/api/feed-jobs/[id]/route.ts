@@ -36,6 +36,39 @@ export async function PUT(req: Request, { params }: Params) {
   return NextResponse.json(updated);
 }
 
+function parseBudgetRange(
+  budget: string | null,
+  jobType: string | null,
+): { budgetMin: number | null; budgetMax: number | null; budgetDisplay: string | null } {
+  const hourlyMatch = jobType?.match(
+    /Hourly:\s*\$([0-9,.]+)\s*-\s*\$([0-9,.]+)/,
+  );
+  if (hourlyMatch) {
+    return {
+      budgetMin: parseFloat(hourlyMatch[1].replace(/,/g, "")),
+      budgetMax: parseFloat(hourlyMatch[2].replace(/,/g, "")),
+      budgetDisplay: `$${hourlyMatch[1]} - $${hourlyMatch[2]}/hr`,
+    };
+  }
+  const fixedMatch = budget?.match(/\$([0-9,.]+)/);
+  if (fixedMatch) {
+    const amount = parseFloat(fixedMatch[1].replace(/,/g, ""));
+    return { budgetMin: amount, budgetMax: amount, budgetDisplay: budget };
+  }
+  return { budgetMin: null, budgetMax: null, budgetDisplay: budget ?? null };
+}
+
+function parseProposalCount(proposals: string | null): number | null {
+  if (!proposals) return null;
+  if (proposals.includes("Fewer than 5")) return 3;
+  if (proposals.includes("50+")) return 50;
+  const rangeMatch = proposals.match(/(\d+)\s*to\s*(\d+)/);
+  if (rangeMatch) {
+    return Math.round((Number(rangeMatch[1]) + Number(rangeMatch[2])) / 2);
+  }
+  return null;
+}
+
 export async function POST(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   const feedJob = db
@@ -53,9 +86,12 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   const now = new Date().toISOString();
-  const budgetType = feedJob.jobType?.toLowerCase().includes("hourly")
-    ? "hourly"
-    : "fixed";
+  const isHourly = feedJob.jobType?.toLowerCase().includes("hourly");
+  const budgetType = isHourly ? "hourly" : "fixed";
+  const { budgetMin, budgetMax, budgetDisplay } = parseBudgetRange(
+    feedJob.budget,
+    feedJob.jobType,
+  );
 
   const clientParts = [
     feedJob.clientRating ? `Rating: ${feedJob.clientRating}` : null,
@@ -70,10 +106,16 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .values({
       title: feedJob.title,
       upworkUrl: feedJob.url,
-      budget: feedJob.budget,
+      budget: budgetDisplay,
       budgetType,
+      budgetMin,
+      budgetMax,
       description: feedJob.description,
       clientInfo: clientParts || null,
+      experienceLevel: feedJob.experienceLevel,
+      skillsJson: feedJob.skillsJson,
+      postedAt: feedJob.postedAt,
+      proposalCount: parseProposalCount(feedJob.proposals),
       status: "draft",
       createdAt: now,
       updatedAt: now,

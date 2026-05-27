@@ -66,6 +66,17 @@ export async function POST(req: Request) {
     .map((r) => `${r.count} ${r.status}`)
     .join(", ");
 
+  const jobSkills: string[] = job.skillsJson
+    ? JSON.parse(job.skillsJson)
+    : [];
+  const profileSkills: string[] = prof.skillsJson
+    ? JSON.parse(prof.skillsJson)
+    : [];
+  const profileSkillsLower = new Set(profileSkills.map((s) => s.toLowerCase()));
+  const profileSkillOverlap = jobSkills.filter((s) =>
+    profileSkillsLower.has(s.toLowerCase()),
+  );
+
   const { systemPrompt, userPrompt } = buildRatePrompts({
     profile: prof,
     completedCount,
@@ -74,8 +85,25 @@ export async function POST(req: Request) {
     jobDescription: job.description ?? "",
     budget: job.budget,
     budgetType: job.budgetType,
+    budgetMin: job.budgetMin,
+    budgetMax: job.budgetMax,
     clientInfo: job.clientInfo,
     proposalCount: job.proposalCount,
+    experienceLevel: job.experienceLevel,
+    weeklyHours: job.weeklyHours,
+    projectLength: job.projectLength,
+    jobSkills,
+    profileSkillOverlap,
+    paymentType: job.paymentType,
+    milestoneCount: job.milestonesJson
+      ? JSON.parse(job.milestonesJson).length
+      : 0,
+    milestoneTotal: job.milestonesJson
+      ? JSON.parse(job.milestonesJson).reduce(
+          (sum: number, m: { amount: number }) => sum + (m.amount || 0),
+          0,
+        )
+      : null,
   });
 
   const raw = await generate(

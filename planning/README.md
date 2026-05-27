@@ -7,3 +7,4 @@
 - [05-job-feed-webhook.md](05-job-feed-webhook.md) -- Job feed via Upwork Job Scraper browser extension webhook
 - [06-proposal-workshop.md](06-proposal-workshop.md) -- Interactive proposal workshop with assessment, scoring, approach gen, and iterative refinement
 - [07-rate-guidance.md](07-rate-guidance.md) -- AI rate guidance, completed project tracking, Upwork fee breakdown, rate increase scheduling
+- [08-proposal-submission-data.md](08-proposal-submission-data.md) -- Capture all Upwork submission form data, fix promotion data loss, pattern matching for proposals

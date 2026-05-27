@@ -84,21 +84,39 @@ export const jobs = sqliteTable("jobs", {
   upworkUrl: text("upwork_url"),
   budget: text("budget"),
   budgetType: text("budget_type").default("fixed"),
+  budgetMin: real("budget_min"),
+  budgetMax: real("budget_max"),
   description: text("description"),
   clientInfo: text("client_info"),
+  category: text("category"),
+  experienceLevel: text("experience_level"),
+  skillsJson: text("skills_json"),
   proposalCount: integer("proposal_count"),
   connectsCost: integer("connects_cost"),
+  boostConnects: integer("boost_connects"),
+  weeklyHours: text("weekly_hours"),
+  projectLength: text("project_length"),
+  postedAt: text("posted_at"),
   deadline: text("deadline"),
   notes: text("notes"),
   status: text("status").default("draft").notNull(),
   proposalText: text("proposal_text"),
   bidRate: real("bid_rate"),
   bidRateCurrency: text("bid_rate_currency"),
+  paymentType: text("payment_type"),
+  milestonesJson: text("milestones_json"),
+  highlightedProjectIndex: integer("highlighted_project_index"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
 
 export type Job = typeof jobs.$inferSelect;
+
+export type Milestone = {
+  description: string;
+  dueDate: string;
+  amount: number;
+};
 
 // --- Proposal Templates ---
 

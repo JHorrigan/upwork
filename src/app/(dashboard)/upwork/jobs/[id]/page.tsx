@@ -10,7 +10,9 @@ import {
   DollarSign,
   ExternalLink,
   Loader2,
+  Minus,
   Pencil,
+  Plus,
   RefreshCw,
   Save,
   TrendingUp,
@@ -18,7 +20,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import type { Job, ProposalTemplate } from "@/lib/db/schema";
+import type { Job, ProposalTemplate, PortfolioProject, Milestone } from "@/lib/db/schema";
 
 type RateGuidance = {
   suggestedRate: number;
@@ -77,6 +79,11 @@ export default function JobDetailPage() {
   const [templates, setTemplates] = useState<ProposalTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
+  const [portfolio, setPortfolio] = useState<PortfolioProject[]>([]);
+
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [paymentType, setPaymentType] = useState<string>("");
+
   const [rateGuidance, setRateGuidance] = useState<RateGuidance | null>(null);
   const [rateLoading, setRateLoading] = useState(false);
   const [rateError, setRateError] = useState("");
@@ -90,6 +97,8 @@ export default function JobDetailPage() {
       const data = await res.json();
       setJob(data);
       if (data.bidRate != null) setBidRateInput(String(data.bidRate));
+      if (data.paymentType) setPaymentType(data.paymentType);
+      if (data.milestonesJson) setMilestones(JSON.parse(data.milestonesJson));
     }
     setLoading(false);
   }, [id]);
@@ -99,6 +108,11 @@ export default function JobDetailPage() {
     fetch("/api/proposal-templates")
       .then((r) => r.json())
       .then((d) => setTemplates(d.templates ?? []));
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.portfolioJson) setPortfolio(JSON.parse(d.portfolioJson));
+      });
   }, [fetchJob]);
 
   async function updateStatus(status: string) {
@@ -381,6 +395,119 @@ export default function JobDetailPage() {
                     type="number"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                      Experience Level
+                    </span>
+                    <select
+                      value={(val("experienceLevel") as string) ?? ""}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          experienceLevel: e.target.value || null,
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone focus:border-accent focus:outline-none"
+                    >
+                      <option value="">Not set</option>
+                      <option value="Entry">Entry</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </label>
+                  <Field
+                    label="Category"
+                    value={(val("category") as string) ?? ""}
+                    onChange={(v) =>
+                      setDraft((prev) => ({ ...prev, category: v || null }))
+                    }
+                  />
+                </div>
+                <Field
+                  label="Skills (comma-separated)"
+                  value={
+                    (() => {
+                      const v = val("skillsJson") as string | null;
+                      if (!v) return "";
+                      try { return JSON.parse(v).join(", "); } catch { return v; }
+                    })()
+                  }
+                  onChange={(v) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      skillsJson: v
+                        ? JSON.stringify(v.split(",").map((s: string) => s.trim()).filter(Boolean))
+                        : null,
+                    }))
+                  }
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                      Weekly Hours
+                    </span>
+                    <select
+                      value={(val("weeklyHours") as string) ?? ""}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          weeklyHours: e.target.value || null,
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone focus:border-accent focus:outline-none"
+                    >
+                      <option value="">Not set</option>
+                      <option value="Less than 30 hrs/week">Less than 30 hrs/week</option>
+                      <option value="30+ hrs/week">30+ hrs/week</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                      Project Length
+                    </span>
+                    <select
+                      value={(val("projectLength") as string) ?? ""}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          projectLength: e.target.value || null,
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone focus:border-accent focus:outline-none"
+                    >
+                      <option value="">Not set</option>
+                      <option value="Less than a month">Less than a month</option>
+                      <option value="1 to 3 months">1 to 3 months</option>
+                      <option value="3 to 6 months">3 to 6 months</option>
+                      <option value="More than 6 months">More than 6 months</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field
+                    label="Boost Connects"
+                    value={String(val("boostConnects") ?? "")}
+                    onChange={(v) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        boostConnects: v ? Number(v) : null,
+                      }))
+                    }
+                    type="number"
+                  />
+                  <Field
+                    label="Proposal Count"
+                    value={String(val("proposalCount") ?? "")}
+                    onChange={(v) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        proposalCount: v ? Number(v) : null,
+                      }))
+                    }
+                    type="number"
+                  />
+                </div>
                 <Field
                   label="Client Info"
                   value={(val("clientInfo") as string) ?? ""}
@@ -395,28 +522,245 @@ export default function JobDetailPage() {
                     setDraft((prev) => ({ ...prev, deadline: v }))
                   }
                 />
+                {portfolio.length > 0 && (
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                      Highlight Portfolio Project
+                    </span>
+                    <select
+                      value={String(val("highlightedProjectIndex") ?? "")}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          highlightedProjectIndex: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        }))
+                      }
+                      className="rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone focus:border-accent focus:outline-none"
+                    >
+                      <option value="">Auto (best match)</option>
+                      {portfolio.map((p, i) => (
+                        <option key={i} value={i}>
+                          {p.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col gap-2 text-sm">
-                {job.upworkUrl && (
-                  <a
-                    href={job.upworkUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
-                  >
-                    <ExternalLink size={11} />
-                    View on Upwork
-                  </a>
-                )}
+              <div className="flex flex-col gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  {job.upworkUrl && (
+                    <a
+                      href={job.upworkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                    >
+                      <ExternalLink size={11} />
+                      View on Upwork
+                    </a>
+                  )}
+                  {job.experienceLevel && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      job.experienceLevel === "Expert"
+                        ? "bg-amber-500/15 text-amber-400"
+                        : job.experienceLevel === "Intermediate"
+                          ? "bg-blue-500/15 text-blue-400"
+                          : "bg-bone-dim/20 text-bone-dim"
+                    }`}>
+                      {job.experienceLevel}
+                    </span>
+                  )}
+                  {job.category && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-raised text-bone-dim">
+                      {job.category}
+                    </span>
+                  )}
+                </div>
+
+                {job.skillsJson && (() => {
+                  const skills: string[] = JSON.parse(job.skillsJson);
+                  return skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {skills.map((s) => (
+                        <span
+                          key={s}
+                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-accent/8 text-accent/80 border border-accent/10"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-bone-dim">
                   {job.budget && <span>Budget: {job.budget} ({job.budgetType})</span>}
-                  {job.connectsCost && (
+                  {job.weeklyHours && <span>{job.weeklyHours}</span>}
+                  {job.projectLength && <span>{job.projectLength}</span>}
+                  {job.connectsCost != null && (
                     <span>{job.connectsCost} connects</span>
+                  )}
+                  {job.boostConnects != null && (
+                    <span>+{job.boostConnects} boost</span>
+                  )}
+                  {job.proposalCount != null && (
+                    <span>~{job.proposalCount} proposals</span>
                   )}
                   {job.clientInfo && <span>{job.clientInfo}</span>}
                   {job.deadline && <span>Deadline: {job.deadline}</span>}
                 </div>
+
+                {job.highlightedProjectIndex != null && portfolio[job.highlightedProjectIndex] && (
+                  <div className="flex items-center gap-1.5 text-xs text-bone-dim/70">
+                    <span className="text-[10px] font-mono font-medium tracking-wider uppercase text-bone-dim/50">
+                      Highlight:
+                    </span>
+                    {portfolio[job.highlightedProjectIndex].title}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Payment Structure */}
+          <section className="p-5 rounded-xl bg-surface border border-border">
+            <h3 className="font-display text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <DollarSign size={13} className="text-accent" />
+              Payment Structure
+            </h3>
+            {mode === "edit" ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-2">
+                  {(["milestones", "project"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => {
+                        const next = (val("paymentType") as string) === t ? "" : t;
+                        setDraft((prev) => ({ ...prev, paymentType: next || null }));
+                        setPaymentType(next);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        (val("paymentType") as string) === t
+                          ? "bg-accent/15 text-accent border border-accent/30"
+                          : "border border-border text-bone-dim hover:text-bone"
+                      }`}
+                    >
+                      {t === "milestones" ? "By Milestones" : "By Project"}
+                    </button>
+                  ))}
+                </div>
+                {(val("paymentType") as string) === "milestones" && (
+                  <div className="flex flex-col gap-2">
+                    {milestones.map((m, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <input
+                          type="text"
+                          placeholder="Description"
+                          value={m.description}
+                          onChange={(e) => {
+                            const next = [...milestones];
+                            next[i] = { ...next[i], description: e.target.value };
+                            setMilestones(next);
+                            setDraft((prev) => ({ ...prev, milestonesJson: JSON.stringify(next) }));
+                          }}
+                          className="flex-1 rounded-lg border border-border bg-ink px-3 py-1.5 text-sm text-bone placeholder:text-bone-dim/30 focus:border-accent focus:outline-none"
+                        />
+                        <input
+                          type="date"
+                          value={m.dueDate}
+                          onChange={(e) => {
+                            const next = [...milestones];
+                            next[i] = { ...next[i], dueDate: e.target.value };
+                            setMilestones(next);
+                            setDraft((prev) => ({ ...prev, milestonesJson: JSON.stringify(next) }));
+                          }}
+                          className="w-[130px] rounded-lg border border-border bg-ink px-2 py-1.5 text-sm text-bone focus:border-accent focus:outline-none"
+                        />
+                        <div className="relative w-[100px]">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-bone-dim/50">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={m.amount || ""}
+                            onChange={(e) => {
+                              const next = [...milestones];
+                              next[i] = { ...next[i], amount: Number(e.target.value) || 0 };
+                              setMilestones(next);
+                              setDraft((prev) => ({ ...prev, milestonesJson: JSON.stringify(next) }));
+                            }}
+                            className="w-full rounded-lg border border-border bg-ink pl-6 pr-2 py-1.5 text-sm text-bone placeholder:text-bone-dim/30 focus:border-accent focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            const next = milestones.filter((_, j) => j !== i);
+                            setMilestones(next);
+                            setDraft((prev) => ({ ...prev, milestonesJson: JSON.stringify(next) }));
+                          }}
+                          className="p-1.5 rounded-lg text-bone-dim/40 hover:text-red-400 transition-colors"
+                        >
+                          <Minus size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        const next = [...milestones, { description: "", dueDate: "", amount: 0 }];
+                        setMilestones(next);
+                        setDraft((prev) => ({ ...prev, milestonesJson: JSON.stringify(next) }));
+                      }}
+                      className="self-start flex items-center gap-1.5 text-xs text-bone-dim hover:text-accent transition-colors"
+                    >
+                      <Plus size={12} />
+                      Add Milestone
+                    </button>
+                    {milestones.length > 0 && (
+                      <div className="flex justify-end text-xs text-bone-dim">
+                        Total: ${milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm">
+                {job.paymentType === "milestones" ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs text-bone-dim">By Milestones</span>
+                    {(() => {
+                      const ms: Milestone[] = job.milestonesJson ? JSON.parse(job.milestonesJson) : [];
+                      return ms.length > 0 ? (
+                        <div className="flex flex-col gap-1.5">
+                          {ms.map((m, i) => (
+                            <div key={i} className="flex items-center justify-between rounded-lg bg-ink px-3 py-2 border border-border-subtle">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-bone">{m.description || "Untitled milestone"}</span>
+                                {m.dueDate && (
+                                  <span className="text-[10px] text-bone-dim/50">{m.dueDate}</span>
+                                )}
+                              </div>
+                              <span className="text-xs font-medium text-bone">${m.amount.toFixed(2)}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-end text-xs text-accent font-medium pt-1">
+                            Total: ${ms.reduce((sum, m) => sum + (m.amount || 0), 0).toFixed(2)}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-bone-dim/50">No milestones defined yet.</p>
+                      );
+                    })()}
+                  </div>
+                ) : job.paymentType === "project" ? (
+                  <span className="text-xs text-bone-dim">By Project (paid on completion)</span>
+                ) : (
+                  <p className="text-xs text-bone-dim/50">Not set. Edit to choose milestones or project payment.</p>
+                )}
               </div>
             )}
           </section>

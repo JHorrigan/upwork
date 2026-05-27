@@ -4,7 +4,8 @@ import { profile, settings, jobs, proposalTemplates } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generate } from "@/lib/ai/providers";
 import { buildProposalPrompts } from "@/lib/ai/proposal-prompt";
-import type { ModelAssignments, ApiKeys } from "@/lib/db/schema";
+import type { ProposalContext } from "@/lib/ai/proposal-prompt";
+import type { ModelAssignments, ApiKeys, Job } from "@/lib/db/schema";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
   let description = jobDescription;
   let title = jobTitle;
   let bidRate: number | null = null;
+  let proposalCtx: ProposalContext | undefined;
 
   if (jobId) {
     const job = db
@@ -26,6 +28,15 @@ export async function POST(req: Request) {
     description = job.description;
     title = title ?? job.title;
     bidRate = job.bidRate;
+    proposalCtx = {
+      experienceLevel: job.experienceLevel,
+      weeklyHours: job.weeklyHours,
+      projectLength: job.projectLength,
+      jobSkills: job.skillsJson ? JSON.parse(job.skillsJson) : [],
+      highlightedProjectIndex: job.highlightedProjectIndex,
+      paymentType: job.paymentType,
+      milestones: job.milestonesJson ? JSON.parse(job.milestonesJson) : [],
+    };
   }
 
   if (!description) {
@@ -75,6 +86,7 @@ export async function POST(req: Request) {
     title,
     templateContent,
     bidRate,
+    proposalCtx,
   );
 
   const proposal = await generate(
