@@ -33,6 +33,7 @@ yarn-error.log*
 
 # local sqlite database
 /data
+*.db
 
 # typescript
 *.tsbuildinfo
