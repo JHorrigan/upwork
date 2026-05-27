@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,6 +9,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  FileText,
   Loader2,
   Rss,
   Star,
@@ -36,12 +36,9 @@ function isStale(lastSeenAt: string | null): boolean {
 }
 
 export default function FeedPage() {
-  const router = useRouter();
   const [jobs, setJobs] = useState<FeedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
-  const [promoting, setPromoting] = useState<number | null>(null);
-
   const fetchJobs = useCallback(async () => {
     const qs = showDismissed ? "?dismissed=true" : "";
     const res = await fetch(`/api/feed-jobs${qs}`);
@@ -63,19 +60,6 @@ export default function FeedPage() {
       body: JSON.stringify({ dismissed: 1 }),
     });
     setJobs((prev) => prev.filter((j) => j.id !== id));
-  }
-
-  async function promote(id: number) {
-    setPromoting(id);
-    const res = await fetch(`/api/feed-jobs/${id}`, { method: "POST" });
-    if (res.ok) {
-      const newJob = await res.json();
-      router.push(`/upwork/jobs/${newJob.id}`);
-    } else if (res.status === 409) {
-      const data = await res.json();
-      router.push(`/upwork/jobs/${data.jobId}`);
-    }
-    setPromoting(null);
   }
 
   if (loading) {
@@ -154,9 +138,12 @@ export default function FeedPage() {
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-display text-sm font-semibold truncate">
+                      <Link
+                        href={`/upwork/feed/${job.id}`}
+                        className="font-display text-sm font-semibold truncate hover:text-accent transition-colors"
+                      >
                         {job.title}
-                      </h3>
+                      </Link>
                       {isPromoted && (
                         <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-accent/15 text-accent">
                           Tracked
@@ -203,6 +190,13 @@ export default function FeedPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      href={`/upwork/feed/${job.id}`}
+                      className="p-1.5 rounded-md text-bone-dim hover:text-bone hover:bg-surface-raised transition-colors"
+                      title="View details"
+                    >
+                      <FileText size={14} />
+                    </Link>
                     {job.url && (
                       <a
                         href={job.url}
@@ -214,37 +208,23 @@ export default function FeedPage() {
                         <ExternalLink size={14} />
                       </a>
                     )}
-                    {!isPromoted && !job.dismissed && (
-                      <>
-                        <button
-                          onClick={() => dismiss(job.id)}
-                          className="p-1.5 rounded-md text-bone-dim/50 hover:text-red-400 hover:bg-surface-raised transition-colors"
-                          title="Dismiss"
-                        >
-                          <X size={14} />
-                        </button>
-                        <button
-                          onClick={() => promote(job.id)}
-                          disabled={promoting === job.id}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-accent text-ink-deep text-xs font-semibold hover:brightness-110 transition-all disabled:opacity-50"
-                        >
-                          {promoting === job.id ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <ArrowRight size={12} />
-                          )}
-                          Track
-                        </button>
-                      </>
-                    )}
                     {isPromoted && (
                       <Link
                         href={`/upwork/jobs/${job.promotedJobId}`}
                         className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-accent/30 text-xs font-medium text-accent hover:bg-accent/10 transition-colors"
                       >
-                        View
+                        Tracked
                         <ArrowRight size={12} />
                       </Link>
+                    )}
+                    {!isPromoted && !job.dismissed && (
+                      <button
+                        onClick={() => dismiss(job.id)}
+                        className="p-1.5 rounded-md text-bone-dim/50 hover:text-red-400 hover:bg-surface-raised transition-colors"
+                        title="Dismiss"
+                      >
+                        <X size={14} />
+                      </button>
                     )}
                   </div>
                 </div>

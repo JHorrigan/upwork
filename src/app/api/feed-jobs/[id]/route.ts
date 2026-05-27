@@ -5,6 +5,19 @@ import { eq } from "drizzle-orm";
 
 type Params = { params: Promise<{ id: string }> };
 
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const row = db
+    .select()
+    .from(feedJobs)
+    .where(eq(feedJobs.id, Number(id)))
+    .get();
+  if (!row) {
+    return NextResponse.json({ error: "Feed job not found" }, { status: 404 });
+  }
+  return NextResponse.json(row);
+}
+
 export async function PUT(req: Request, { params }: Params) {
   const { id } = await params;
   const body = await req.json();
