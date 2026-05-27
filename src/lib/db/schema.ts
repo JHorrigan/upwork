@@ -109,3 +109,30 @@ export const proposalTemplates = sqliteTable("proposal_templates", {
 });
 
 export type ProposalTemplate = typeof proposalTemplates.$inferSelect;
+
+// --- Feed Jobs (from browser extension webhook) ---
+
+export const feedJobs = sqliteTable("feed_jobs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  uid: text("uid").notNull().unique(),
+  title: text("title").notNull(),
+  url: text("url"),
+  description: text("description"),
+  jobType: text("job_type"),
+  budget: text("budget"),
+  experienceLevel: text("experience_level"),
+  skillsJson: text("skills_json"),
+  paymentVerified: integer("payment_verified").default(0),
+  clientRating: text("client_rating"),
+  clientTotalSpent: text("client_total_spent"),
+  proposals: text("proposals"),
+  postedAt: text("posted_at"),
+  scrapedAt: text("scraped_at"),
+  targetName: text("target_name"),
+  lastSeenAt: text("last_seen_at"),
+  dismissed: integer("dismissed").default(0),
+  promotedJobId: integer("promoted_job_id"),
+  createdAt: text("created_at").notNull(),
+});
+
+export type FeedJob = typeof feedJobs.$inferSelect;

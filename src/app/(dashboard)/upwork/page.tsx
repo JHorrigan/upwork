@@ -11,10 +11,10 @@ const sections = [
   },
   {
     title: "Job Feed",
-    description: "Jobs from Upwork email alerts, parsed and surfaced newest first.",
+    description: "Jobs discovered by the Upwork Job Scraper extension, newest first.",
     icon: Mail,
     status: "v0.1",
-    href: null,
+    href: "/upwork/feed",
   },
   {
     title: "Slack Alerts",
