@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
+import { sendSlackNotification } from "@/lib/slack";
 
 export async function GET(req: NextRequest) {
   const statusFilter = req.nextUrl.searchParams.get("status");
@@ -35,6 +36,9 @@ export async function POST(req: Request) {
     })
     .returning()
     .get();
+
+  const budget = result.budget ? ` (${result.budget})` : "";
+  sendSlackNotification(`New job tracked: ${result.title}${budget}`);
 
   return NextResponse.json(result, { status: 201 });
 }

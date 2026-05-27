@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { sendSlackNotification } from "@/lib/slack";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -24,6 +25,12 @@ export async function PUT(req: Request, { params }: Params) {
   const { id: _, createdAt: __, ...updates } = body;
   updates.updatedAt = new Date().toISOString();
 
+  const before = db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.id, Number(id)))
+    .get();
+
   db.update(jobs)
     .set(updates)
     .where(eq(jobs.id, Number(id)))
@@ -33,6 +40,13 @@ export async function PUT(req: Request, { params }: Params) {
     .from(jobs)
     .where(eq(jobs.id, Number(id)))
     .get();
+
+  if (before && updated && updates.status && before.status !== updated.status) {
+    sendSlackNotification(
+      `Job status changed: ${updated.title} -- ${before.status} -> ${updated.status}`,
+    );
+  }
+
   return NextResponse.json(updated);
 }
 
