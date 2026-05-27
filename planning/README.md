@@ -8,3 +8,4 @@
 - [06-proposal-workshop.md](06-proposal-workshop.md) -- Interactive proposal workshop with assessment, scoring, approach gen, and iterative refinement
 - [07-rate-guidance.md](07-rate-guidance.md) -- AI rate guidance, completed project tracking, Upwork fee breakdown, rate increase scheduling
 - [08-proposal-submission-data.md](08-proposal-submission-data.md) -- Capture all Upwork submission form data, fix promotion data loss, pattern matching for proposals
+- [09-multi-platform-restructure.md](09-multi-platform-restructure.md) -- Restructure app for multi-platform freelancing: global dashboard, collapsible sidebar, platform dashboards
